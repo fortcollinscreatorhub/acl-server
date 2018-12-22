@@ -5,6 +5,7 @@ app_dir="$(cd "${script_dir}"/.. && pwd)"
 
 export LC_ALL=am_ET.UTF-8
 export LANG=am_ET.UTF-8
+export PYTHONPATH="$app_dir/lib"
 
 
 . "${app_dir}/venv/bin/activate"

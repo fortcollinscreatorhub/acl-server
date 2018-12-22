@@ -8,7 +8,7 @@ from filelock import FileLock
 import os
 import time
 import sys
-from datetime import date
+import datetime
 
 apiKey_fname = 'client_secret'
 
@@ -37,11 +37,11 @@ def get_all_active_members(debug, contactsUrl):
     Returns: list of contacts
     """
 
-    today = str(date.today()) # yyyy-mm-dd
+    valid_date = str(datetime.date.today() - datetime.timedelta(days=7)) # 7 days ago in yyyy-mm-dd format
 
     #params = {'$filter': 'member eq true AND Status eq Active',
     #          '$async': 'false'}
-    params = {'$filter': "member eq true AND ( Status eq Active OR ( Status eq PendingRenewal AND 'Renewal due' ge " + today + "))",
+    params = {'$filter': "member eq true AND ( Status eq Active OR ( Status eq PendingRenewal AND 'Renewal due' ge " + valid_date + "))",
               '$async': 'false'}
     request_url = contactsUrl + '?' + urllib.parse.urlencode(params)
     if debug: print('Making api call to get contacts')
