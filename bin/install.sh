@@ -8,17 +8,18 @@ app_dir="$(cd "${script_dir}"/.. && pwd)"
 
 cd "${app_dir}"
 
-groupadd --system gpio || true
+#groupadd --system gpio || true
 
-useradd --system --home-dir "${app_dir}" fcchaccess || true
+#useradd --system --home-dir "${app_dir}" fcchaccess || true
 
 # Could be combined with useradd,
 # but doing this separately works for upgrades too
-usermod -a -G gpio fcchaccess || true
-usermod -a -G dialout fcchaccess || true
+#usermod -a -G gpio fcchaccess || true
+#usermod -a -G dialout fcchaccess || true
 
 if [ ! -d venv ]; then
-  virtualenv -p python3 venv
+  #virtualenv -p python3 venv
+  python3 -m venv venv
 fi
 (. ./venv/bin/activate && pip install --upgrade -r etc/pip-requirements.txt)
 
