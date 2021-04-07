@@ -9,9 +9,7 @@ outdata = ''
 for line in sys.stdin:
 	outdata += line
 
-url = 'https://hooks.slack.com/services/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'
-
 data = {'text': outdata}
 
-rval = requests.post(url, json = data)
+rval = requests.post(url.rstrip(), json = data)
 print(rval)
