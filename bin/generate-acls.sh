@@ -11,7 +11,6 @@ export PYTHONPATH="$app_dir/lib"
 . "${app_dir}/venv/bin/activate"
 
 if [[ "$1" == -* ]]; then
-  #exec python3 "${app_dir}/bin/generate-acls.py" --noauth_local_webserver "$@"
   exec python3 "${app_dir}/bin/generate-acls-WA.py" "$@"
 fi
 
@@ -19,7 +18,8 @@ if [ "${GEN_ACLS_MAIL_WRAP}" == "" ]; then
   acl_report="${app_dir}/var/log/acl-report.log"
   GEN_ACLS_MAIL_WRAP=1 "$0" "$@" > "${acl_report}" 2>&1
   ret=$?
-  mail -s "ACL server update log" sysadmin@fortcollinscreatorhub.org < "${acl_report}"
+  #mail -s "ACL server update log" sysadmin@fortcollinscreatorhub.org < "${acl_report}"
+  python3 "${app_dir}/bin/slack.py" < "${acl_report}" > /tmp/slack.log
   cat "${acl_report}"
   exit ${ret}
 fi
@@ -31,7 +31,6 @@ mkdir -p "${acl_new_dir}"
 cp -r "${acl_new_dir}" "${acl_orig_dir}"
 
 acl_dl_log="${app_dir}/var/log/acl-download.log"
-#python3 "${app_dir}/bin/generate-acls.py" --noauth_local_webserver "${acl_new_dir}" > "${acl_dl_log}" 2>&1
 python3 "${app_dir}/bin/generate-acls-WA.py" "${acl_new_dir}" > "${acl_dl_log}" 2>&1
 ret=$?
 if [ ${ret} -ne 0 ]; then

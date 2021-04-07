@@ -8,7 +8,6 @@
 name="aclserver"
 pidfile="/usr/home/acl/acl-server/var/pid"
 procname="/usr/home/acl/acl-server/venv/bin/python3"
-#command="/usr/home/acl/acl-server/bin/auth-server.sh"
 command="/usr/home/acl/acl-server/auth-server/auth_server.sh"
 
 load_rc_config $name

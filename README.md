@@ -33,8 +33,6 @@ Download the door controller software.
     cd /home/acl/acl-server
     bash bin/install.sh
 
-This will fail before completing as it hasn't been cleaned up yet
-
 # Add to rc.d to start at boot
 
 cp etc/usr_local_etc_rc.d/aclserver to /usr/local/etc/rc.d/aclserver

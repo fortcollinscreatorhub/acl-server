@@ -10,3 +10,4 @@ rsa==4.1
 six==1.10.0
 uritemplate==3.0.0
 Werkzeug==0.15.3
+requests==2.25
