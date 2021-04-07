@@ -9,13 +9,13 @@ Create a FreeNAS jail named "ACL", then shell into it
 
 # System packages
 
-pkg install git
-            python
-            py37.pip
-            links
-            py37.flask
-            wget
-            uwsgi
+            pkg install git
+            pkg install python
+            pkg install py37-pip
+            pkg install links
+            pkg install py37-flask
+            pkg install wget
+            pkg install uwsgi
             
 # Create account
 
