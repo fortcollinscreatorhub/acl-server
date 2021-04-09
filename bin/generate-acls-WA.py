@@ -84,15 +84,15 @@ def grab_RFID(debug, contact):
     """
     global RFID_list
 
-    #priv = ['door'] # everyone gets in the door!
+    priv = ['door'] # everyone gets in the door!
     # change: only folks that have taken the orientation get in the door!
     #
-    priv = []
-    for field in contact.FieldValues:
-        if (field.FieldName == 'Training'):
-            for training in field.Value:
-                if (training.Label == 'Orientation'):
-                    priv.append('door')
+    #priv = []
+    #for field in contact.FieldValues:
+    #    if (field.FieldName == 'Training'):
+    #        for training in field.Value:
+    #            if (training.Label == 'Orientation'):
+    #                priv.append('door')
 
     rfid = ''
     for field in contact.FieldValues:
