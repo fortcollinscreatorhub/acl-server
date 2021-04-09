@@ -35,13 +35,19 @@ Download the door controller software.
 
 # Add to rc.d to start at boot
 
-cp etc/usr_local_etc_rc.d/aclserver to /usr/local/etc/rc.d/aclserver
+    cp etc/usr_local_etc_rc.d/aclserver /usr/local/etc/rc.d/aclserver
+    chmod +x /usr/local/etc/rc.d/aclserver
 
 # Set up cron jobs
 
 Add to system crontab: (/etc/crontab)
 
     0   3   *   *   *  wget -O /dev/null 'http://localhost:8080/ui/update-acls' > /dev/null 2>&1
+    
+# Add api keys
+
+- Get Wild Apriocot API key and add it to etc/client_secret
+- Get Slack Webhook URL and add it to etc/slack_url
     
 # Test
 
