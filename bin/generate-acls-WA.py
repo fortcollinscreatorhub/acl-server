@@ -48,6 +48,7 @@ def get_all_active_members(debug, contactsUrl):
     return api.execute_request(request_url).Contacts
 
 RFID_list = []
+NAME_list = []
 
 acl_mapping = {'blaser': 'big-laser-cutter',
                'mlaser': 'medium-laser-cutter',
@@ -81,8 +82,10 @@ def grab_RFID(debug, contact):
     pulls out list of RFIDs and privileges (ACLs)
 
     Adds to global RFID_list
+    New: builds a name->rfid list (NAME_list)
     """
     global RFID_list
+    global NAME_list
 
     priv = ['door'] # everyone gets in the door!
     # change: only folks that have taken the orientation get in the door!
@@ -101,15 +104,22 @@ def grab_RFID(debug, contact):
         if (field.FieldName == 'Privileges'):
             for privilege in field.Value:
                 priv.append(map_acl(privilege.Label))
+    rfids = []
     if rfid == '':
         return
     if ',' in rfid:
         for r in rfid.split(','):
             RFID_list.append({'rfid':fix_RFID(r), 'priv':priv})
+            rfids.append(str(fix_RFID(r)))
             if debug: print ('Appending ACL - rfid:', r, 'priv:', priv)
     else:
         RFID_list.append({'rfid':fix_RFID(rfid), 'priv':priv})
+        rfids.append(str(fix_RFID(rfid)))
         if debug: print ('Appending ACL - rfid:', rfid, 'priv:', priv)
+
+    rfid_str = ','.join(rfids)
+    NAME_list.append({'name':(contact.LastName + ',' + contact.FirstName), 'rfids':rfid_str})
+    if debug: print ('Appending Name: ' + contact.LastName + ',' + contact.FirstName + ' rfids: ' + rfid_str)
 
 def dump_RFIDs(debug, acl_dir, ts):
     """Reads stored list of RFID and writes
@@ -160,6 +170,23 @@ def dump_RFIDs(debug, acl_dir, ts):
             continue
         fpath = os.path.join(acl_dir, fname)
         os.unlink(fpath)
+
+def dump_NAMEs(debug, acl_dir, ts):
+    """Reads stored list of Names and writes
+    Name file with that data
+    """
+    NAME_list.sort(key=lambda x:x['name'])
+
+    fname_tmp = os.path.join(acl_dir, 'name_to_rfid')
+    f = open (fname_tmp, 'w')
+    if debug: print('Opened file:',fname_tmp)
+
+    for e in NAME_list:
+        f.write(e['name']+':'+str(e['rfids'])+'\n')
+
+    # all done writing
+    f.close()
+
 
 ####
 ################ Main ##################
@@ -218,4 +245,5 @@ if __name__ == '__main__':
         # write the RFIDs to one or more files
         #
         dump_RFIDs(args.debug, args.output_dir, ts)
+        dump_NAMEs(args.debug, args.output_dir, ts)
         print('RFID lists generated OK at', ts)
