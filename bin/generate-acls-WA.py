@@ -87,7 +87,7 @@ def grab_RFID(debug, contact):
     global RFID_list
     global NAME_list
 
-    priv = ['door'] # everyone gets in the door!
+    priv = ['door', 'beltsander', 'spindlesander'] # everyone gets in the door and access to some basic tools
     # change: only folks that have taken the orientation get in the door!
     #
     #priv = []
