@@ -1,141 +1,204 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 
+# Copyright 2018-2022 Steve Undy <steve@roseundy.net>
+
+__author__ = 'steve@roseundy.net'
+
+import WaApi
+import urllib.parse
 import argparse
 from filelock import FileLock
-import httplib2
 import os
 import time
+import sys
+import datetime
 
-from apiclient import discovery
-from oauth2client import client
-from oauth2client import tools
-from oauth2client.file import Storage
-
-# If modifying these scopes, delete your previously saved credentials
-# at ~/.credentials/sheets.googleapis.com-python-quickstart.json
-scopes = 'https://www.googleapis.com/auth/drive.file ' \
-         'https://www.googleapis.com/auth/drive.install'
-client_secret_fname = 'client_secret.json'
-google_app_name = 'FCCH Access Control'
+apiKey_fname = 'wa-credentials'
 
 bin_dir = os.path.dirname(__file__)
 app_dir = os.path.dirname(bin_dir)
-client_secret_fpath = os.path.join(
+apiKey_fpath = os.path.join(
     app_dir,
     'etc',
-    client_secret_fname)
+    apiKey_fname)
+acl_fname_prefix = 'acl-'
 
-def get_credentials(flags):
-    """Gets valid user credentials from storage.
+def get_apiKey(kpath):
+    """Reads Wild Apricot API key from a file
 
-    If nothing has been stored, or if the stored credentials are invalid,
-    the OAuth2 flow is completed to obtain the new credentials.
-
-    Returns:
-        Credentials, the obtained credential.
+    Returns: api key string
     """
-    home_dir = os.path.expanduser('~')
-    credential_dir = os.path.join(home_dir, '.credentials')
-    if not os.path.exists(credential_dir):
-        os.makedirs(credential_dir)
-    credential_path = os.path.join(credential_dir,
-        'fcch-access-control-google-oauth.json')
+    with open(kpath, 'r') as f:
+        apiKey = f.readline().strip()
+    return (apiKey)
 
-    store = Storage(credential_path)
-    credentials = store.get()
-    if not credentials or credentials.invalid:
-        flow = client.flow_from_clientsecrets(client_secret_fpath, scopes)
-        flow.user_agent = google_app_name
-        if flags:
-            credentials = tools.run_flow(flow, store, flags)
-        else: # Needed only for compatibility with Python 2.6
-            credentials = tools.run(flow, store)
-        print('Storing credentials to ' + credential_path)
-    return credentials
 
-def download_google_sheet(flags, debug, acl_dir, ts):
-    credentials = get_credentials(flags)
-    http = credentials.authorize(httplib2.Http())
-    discoveryUrl = \
-        'https://sheets.googleapis.com/$discovery/rest?version=v4'
-    service = discovery.build('sheets', 'v4', http=http,
-        discoveryServiceUrl=discoveryUrl)
-    spreadsheetId = '1Yyh2_EYODBmzlVgj0tv-oQpPBWjPptk3kwTZ3CThrzc'
-    result = service.spreadsheets().values().get(
-        spreadsheetId=spreadsheetId,
-        range='Access Control Export'
-    ).execute()
-    values = result.get('values', [])
-    if not values:
-        raise Exception('No values found in Google Sheet')
+def get_all_active_members(debug, contactsUrl):
+    """Make an API call to Wild Apricot to retrieve
+    contact info for all active members.
+
+    Returns: list of contacts
+    """
+
+    valid_date = str(datetime.date.today() - datetime.timedelta(days=7)) # 7 days ago in yyyy-mm-dd format
+
+    #params = {'$filter': 'member eq true AND Status eq Active',
+    #          '$async': 'false'}
+    params = {'$filter': "member eq true AND ( Status eq Active OR ( Status eq PendingRenewal AND 'Renewal due' ge " + valid_date + "))",
+              '$async': 'false'}
+    request_url = contactsUrl + '?' + urllib.parse.urlencode(params)
+    if debug: print('Making api call to get contacts')
+    return api.execute_request(request_url).Contacts
+
+RFID_list = []
+NAME_list = []
+
+acl_mapping = {'blaser': 'big-laser-cutter',
+               'mlaser': 'medium-laser-cutter',
+               'slaser': 'small-laser-cutter'}
+
+def map_acl(x):
+    """Maps privileges from Wild Apricot member database
+    to ACL names used by ACL server
+
+    Returns: mapped ACL name
+    """
+    x = x.lower()
+    if x in acl_mapping:
+        return (acl_mapping[x])
+    else:
+        return (x)
+    
+
+def fix_RFID(r):
+    """Maps RFID strings to integers
+
+    Returns: integer RFID
+    """
+    #f = str(r).strip()
+    #while f[0] == '0':
+    #    f = f[1:]
+    return int(r)
+
+def grab_RFID(debug, contact):
+    """Given a contact from Wild Apricot member database,
+    pulls out list of RFIDs and privileges (ACLs)
+
+    Adds to global RFID_list
+    New: builds a name->rfid list (NAME_list)
+    """
+    global RFID_list
+    global NAME_list
+
+    priv = ['door', 'beltsander', 'spindlesander'] # everyone gets in the door and access to some basic tools
+    # change: only folks that have taken the orientation get in the door!
+    #
+    #priv = []
+    #for field in contact.FieldValues:
+    #    if (field.FieldName == 'Training'):
+    #        for training in field.Value:
+    #            if (training.Label == 'Orientation'):
+    #                priv.append('door')
+
+    rfid = ''
+    for field in contact.FieldValues:
+        if (field.FieldName == 'RFID ID') and (field.Value is not None):
+            rfid = field.Value
+        if (field.FieldName == 'Privileges'):
+            for privilege in field.Value:
+                priv.append(map_acl(privilege.Label))
+    rfids = []
+    if rfid == '':
         return
+    if ',' in rfid:
+        for r in rfid.split(','):
+            RFID_list.append({'rfid':fix_RFID(r), 'priv':priv})
+            rfids.append(str(fix_RFID(r)))
+            if debug: print ('Appending ACL - rfid:', r, 'priv:', priv)
+    else:
+        RFID_list.append({'rfid':fix_RFID(rfid), 'priv':priv})
+        rfids.append(str(fix_RFID(rfid)))
+        if debug: print ('Appending ACL - rfid:', rfid, 'priv:', priv)
 
-    headers = values[0]
-    if headers[0] != 'RFID':
-        raise Exception('Header[0] not RFID???')
-    acls = headers[1:]
+    rfid_str = ','.join(rfids)
+    NAME_list.append({'name':(contact.LastName + ',' + contact.FirstName), 'rfids':rfid_str})
+    if debug: print ('Appending Name: ' + contact.LastName + ',' + contact.FirstName + ' rfids: ' + rfid_str)
 
-    def clean_rfid(rfid):
-        try:
-            return int(rfid.strip().lstrip('0'))
-        except:
-            return None
-
-    acl_content = {acl: [] for acl in acls}
-    for row in values[1:]:
-        if debug: print()
-        if debug: print('Values:', repr(row))
-        if not len(row):
-          continue
-        rfids = row[0]
-        if debug: print('Raw RFIDs:', repr(rfids))
-        rfids = rfids.split(',')
-        rfids = [clean_rfid(r) for r in rfids]
-        rfids = [r for r in rfids if r]
-        if debug: print('Clean RFIDs:', repr(rfids))
-        if not rfids:
-            continue
-        for (i, acl) in enumerate(acls):
-            col = 1 + i
-            if col >= len(row):
-                break
-            access = row[col]
-            if debug: print(acl, repr(access))
-            if access != 'y':
-                continue
-            if debug: print(acl, "yes")
-            acl_content[acl].extend(rfids)
-
+def dump_RFIDs(debug, acl_dir, ts):
+    """Reads stored list of RFID and writes
+    ACL files with that data
+    """
+    # get existing list of acl files
     old_files = os.listdir(acl_dir)
+    
+    # sort RFIDs and generate list of privileges - we need the list to know what files to write
+    privileges = set()
+    RFID_list.sort(key=lambda x:x['rfid'])
+    for e in RFID_list:
+        for p in e['priv']:
+            privileges.add(p)
 
-    acl_fname_prefix = 'acl-'
-
-    for acl in acls:
-        fname = acl_fname_prefix + acl
-        fpath = os.path.join(acl_dir, fname)
+    # open one file per privilege
+    File = {}
+    for f in privileges:
+        fname = acl_fname_prefix + f
+        fname_tmp = os.path.join(acl_dir, '.' + fname + '.tmp')
+        File[f] = open (fname_tmp, 'w')
+        if debug: print('Opened file:',fname_tmp)
+        print('# Generated at', ts, file=File[f])
         try:
             old_files.remove(fname)
         except:
             pass
-        fname_tmp = '.' + fname + '.tmp'
-        fpath_tmp = os.path.join(acl_dir, fname_tmp)
-        with open(fpath_tmp, 'wt') as f:
-            print('# Generated at', ts, file=f)
-            for rfid in sorted(acl_content[acl]):
-                print(rfid, file=f)
-        os.rename(fpath_tmp, fpath)
 
+    # go back through list of RFIDs and write them to the appropriate file(s)
+    #
+    for e in RFID_list:
+        for p in e['priv']:
+            File[p].write(str(e['rfid'])+'\n')
+
+    # all done writing
+    for f in File:
+        File[f].close()
+
+    # rename files just written
+    for f in privileges:
+        fname = os.path.join(acl_dir, acl_fname_prefix + f)
+        fname_tmp = os.path.join(acl_dir, '.' + acl_fname_prefix + f + '.tmp')                                 
+        os.rename(fname_tmp, fname)
+        
+    # remove obsolete files
     for fname in old_files:
         if not fname.startswith(acl_fname_prefix):
             continue
         fpath = os.path.join(acl_dir, fname)
         os.unlink(fpath)
 
+def dump_NAMEs(debug, acl_dir, ts):
+    """Reads stored list of Names and writes
+    Name file with that data
+    """
+    NAME_list.sort(key=lambda x:x['name'])
+
+    fname_tmp = os.path.join(acl_dir, 'name_to_rfid')
+    f = open (fname_tmp, 'w')
+    if debug: print('Opened file:',fname_tmp)
+
+    for e in NAME_list:
+        f.write(e['name']+':'+str(e['rfids'])+'\n')
+
+    # all done writing
+    f.close()
+
+
+####
+################ Main ##################
+####
 if __name__ == '__main__':
     ts = time.strftime('%Y%m%dT%H%M%S')
     parser = argparse.ArgumentParser(
-        parents=[tools.argparser],
-        description='Download Access Control info from Google Sheet')
+        #parents=[tools.argparser],
+        description='Download Access Control info (RFIDs) from Wild Apricot')
     parser.add_argument(
         '--debug', action='store_true', help='Turn on debugging prints')
     parser.add_argument(
@@ -146,12 +209,44 @@ if __name__ == '__main__':
         help='Directory to write RFID lists to')
     args = parser.parse_args()
     if args.debug: print(args)
-    if args.auth_only:
-        get_credentials(args)
-    else:
-        if not args.output_dir:
+
+    if not args.auth_only and not args.output_dir:
             parser.error('output_dir required if --auth-only not specified')
-        lock_fn = os.path.join(args.output_dir, ".lock")
-        with FileLock(lock_fn):
-            download_google_sheet(args, args.debug, args.output_dir, ts)
+
+    # Start API and authenticate
+    #
+    apiKey = get_apiKey(apiKey_fpath)
+    
+    api = WaApi.WaApiClient("CLIENT_ID", "CLIENT_SECRET")
+    
+    api.authenticate_with_apikey (apiKey, scope='account_view contacts_view')
+    if args.debug: print('Authenticated')
+
+    if args.auth_only:
+        sys.exit(0)
+
+    lock_fn = os.path.join(args.output_dir, ".lock")
+    with FileLock(lock_fn):
+        
+        # Grab account details
+        #
+        accounts = api.execute_request("/v2/accounts")
+        account = accounts[0]
+        contactsUrl = next(res for res in account.Resources if res.Name == 'Contacts').Url
+        if args.debug: print('contactsUrl:', contactsUrl)
+
+        # request contact details on all active members
+        #
+        contacts = get_all_active_members(args.debug, contactsUrl)
+        if args.debug: print ('Retrieved', len(contacts), 'contacts')
+
+        # find the RFIDs and privileges and store them
+        #
+        for contact in contacts:
+            grab_RFID(args.debug, contact)
+
+        # write the RFIDs to one or more files
+        #
+        dump_RFIDs(args.debug, args.output_dir, ts)
+        dump_NAMEs(args.debug, args.output_dir, ts)
         print('RFID lists generated OK at', ts)

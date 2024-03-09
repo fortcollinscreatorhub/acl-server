@@ -1,0 +1,20 @@
+# Copyright 2023-2024 Stephen Warren <swarren@wwwdotorg.org>
+# SPDX-License-Identifier: MIT
+
+Source: fcch-acl-server
+Section: misc
+Priority: optional
+Maintainer: Stephen Warren <swarren@wwwdotorg.org>
+Build-Depends:
+ , debhelper (>= 9)
+Standards-Version: 4.2.1
+
+Package: fcch-acl-server
+Architecture: all
+Section: misc
+Depends:
+ , gunicorn
+ , python3-filelock
+ , python3-flask
+ , ${misc:Depends}
+Description: FCCH access control server

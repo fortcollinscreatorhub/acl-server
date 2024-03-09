@@ -1,0 +1,11 @@
+#!/usr/bin/make -f
+
+# Copyright 2023-2024 Stephen Warren <swarren@wwwdotorg.org>
+# SPDX-License-Identifier: MIT
+
+%:
+	dh $@
+
+override_dh_auto_install:
+	$(MAKE) install DESTDIR=$(CURDIR)/debian/fcch-acl-server
+	dh_installsystemd

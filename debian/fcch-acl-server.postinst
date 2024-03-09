@@ -1,0 +1,24 @@
+#!/bin/sh
+
+# Copyright 2023-2024 Stephen Warren <swarren@wwwdotorg.org>
+# SPDX-License-Identifier: MIT
+
+set -e
+
+setup_user() {
+    if ! getent passwd fcchacl >/dev/null; then
+        adduser --quiet --system --group --no-create-home --home /opt/fcch/acl-server --shell /usr/sbin/nologin fcchacl
+    fi
+}
+
+setup_perms() {
+    chgrp -R fcchacl /opt/fcch/acl-server/var
+    chmod -R g+w /opt/fcch/acl-server/var
+}
+
+if [ "$1" = configure ]; then
+    setup_user
+    setup_perms
+fi
+
+#DEBHELPER#

@@ -1,0 +1,14 @@
+[Unit]
+Description=FCCH ACL Server
+
+[Service]
+Type=exec
+User=fcchacl
+Group=fcchacl
+ExecStart=/opt/fcch/acl-server/bin/fcch-acl-server.sh
+KillMode=control-group
+Restart=always
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target
