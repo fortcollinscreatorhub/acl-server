@@ -12,8 +12,9 @@ setup_user() {
 }
 
 setup_perms() {
-    chgrp -R fcchacl /opt/fcch/acl-server/var
-    chmod -R g+w /opt/fcch/acl-server/var
+    chown -R fcchacl:fcchacl /opt/fcch/acl-server/var
+    chmod -R ug+wX /opt/fcch/acl-server/var
+    chmod -R o-rwx /opt/fcch/acl-server/var
 }
 
 if [ "$1" = configure ]; then
