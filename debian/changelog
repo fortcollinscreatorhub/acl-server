@@ -1,6 +1,7 @@
 fcch-acl-server (3) UNRELEASED; urgency=medium
 
   * Add HTTP log view URL.
+  * Add logrotate config for HTTP log.
 
  -- Stephen Warren <swarren@wwwdotorg.org>  Wed, 10 Apr 2024 21:18:34 -0600
 

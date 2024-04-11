@@ -20,13 +20,16 @@ args = parser.parse_args()
 
 bin_dir = os.path.join(args.root_dir, 'bin')
 update_acls_bin = os.path.join(bin_dir, 'generate-acls.sh')
-acl_dir = os.path.join(args.root_dir, 'var', 'acls')
+var_dir = os.path.join(args.root_dir, 'var')
+acl_dir = os.path.join(var_dir, 'acls')
 acl_fn_prefix = 'acl-'
-log_dir = os.path.join(args.root_dir, 'var', 'log')
+log_dir = os.path.join(var_dir, 'log')
 access_log_fn_template = os.path.join(log_dir, 'access-%Y-%m.log')
 access_log_ts_template = '%Y%m%dT%H%M%S.'
 http_log_fn = os.path.join(log_dir, 'http.log')
-acl_update_pid_fn = os.path.join(acl_dir, 'acl-update.pid')
+run_dir = os.path.join(var_dir, 'run')
+pid_fn = os.path.join(run_dir, 'gunicorn.pid')
+acl_update_pid_fn = os.path.join(run_dir, 'acl-update.pid')
 acl_update_log_fn = os.path.join(log_dir, 'acl-update.log')
 web_dir = os.path.join(args.root_dir, 'web')
 
@@ -191,5 +194,6 @@ options = {
     'bind': '%s:%s' % ('', '8080'),
     'workers': 2,
     'accesslog': http_log_fn,
+    'pidfile': pid_fn,
 }
 GUnicornApp(app, options).run()
