@@ -1,3 +1,9 @@
+fcch-acl-server (3) UNRELEASED; urgency=medium
+
+  * Add HTTP log view URL.
+
+ -- Stephen Warren <swarren@wwwdotorg.org>  Wed, 10 Apr 2024 21:18:34 -0600
+
 fcch-acl-server (2) bookworm; urgency=medium
 
   * Better var/ perms.

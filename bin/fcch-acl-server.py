@@ -146,6 +146,10 @@ def ui_view_acl(acl):
 def ui_view_access_check_log():
     return show_file(access_log_fn(), 'ui-view-access-check-log.html')
 
+@app.route('/ui/view-http-log')
+def ui_view_http_log():
+    return show_file(http_log_fn, 'ui-view-http-log.html')
+
 @app.route('/api/check-access-0/<acl>/<rfid>')
 def api_check_access_0(acl, rfid):
     result = False
