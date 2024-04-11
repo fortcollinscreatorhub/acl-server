@@ -1,4 +1,4 @@
-fcch-acl-server (3) UNRELEASED; urgency=medium
+fcch-acl-server (3) bookworm; urgency=medium
 
   * Add HTTP log view URL.
   * Add logrotate config for HTTP log.
