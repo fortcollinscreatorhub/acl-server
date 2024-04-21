@@ -42,6 +42,10 @@ app = flask.Flask(
 
 re_acl_name = re.compile('^[a-z0-9_.-]+$')
 
+def log_exception():
+    import traceback
+    traceback.print_exc(file=sys.stderr)
+
 def acl_fn(acl):
     if not re_acl_name.match(acl):
         raise Exception('Invalid ACL ID', acl)
@@ -52,6 +56,7 @@ def show_file(fn, template, **extra):
         with open(fn, 'rt') as f:
             content=f.read()
     except:
+        log_exception()
         content='Could not read log file'
     return flask.render_template(template, content=content, **extra)
 
@@ -75,15 +80,16 @@ def update_acls_running():
             # We should really use a lockfile to manage the pidfile...
             os.unlink(acl_update_pid_fn)
         except:
-            pass
+            log_exception()
     return running
 
 def update_acls_start():
     try:
         is_running = update_acls_running()
     except Exception as e:
-        import trackback
-        return 'Could not determine current running status:\n' + traceback.format_exception(e)
+        log_exception()
+        import traceback
+        return 'Could not determine current running status:\n' + '\n'.join(traceback.format_exception(e))
     if is_running:
         return 'Already running'
     try:
@@ -92,14 +98,16 @@ def update_acls_start():
                 stdout=logf, stderr=logf)
         pid = sp.pid
     except Exception as e:
+        log_exception()
         import traceback
-        return 'Could not start update process:\n' + traceback.format_exception(e)
+        return 'Could not start update process:\n' + '\n'.join(traceback.format_exception(e))
     try:
         with open(acl_update_pid_fn, 'wt') as pidf:
             pidf.write(str(pid))
     except Exception as e:
+        log_exception()
         import traceback
-        return 'Could not record update pid; please wait 1 minute before retrying:\n' + traceback.format_exception(e)
+        return 'Could not record update pid; please wait 1 minute before retrying:\n' + '\n'.join(traceback.format_exception(e))
     return None
 
 def access_log_fn():
