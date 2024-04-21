@@ -126,7 +126,7 @@ def index():
 def ui_update_acls():
     message = update_acls_start()
     if message:
-        return flask.render_template('ui-update-acls.html', message=message)
+        return flask.render_template('ui-update-acls.html', message=message), 409
     else:
         return flask.redirect('/ui/view-acl-update-log', code=302)
 
