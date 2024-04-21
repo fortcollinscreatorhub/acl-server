@@ -1,3 +1,16 @@
+fcch-acl-server (4) bookworm; urgency=medium
+
+  * Translate failures triggering an ACL update to HTTP errors, for better
+    feedback.
+  * Log exceptions for easier debug later.
+  * Add a SIGCHLD handler so that termination of the ACL update script is
+    noticed more quickly; the process doesn't stick around in a defunct
+    state.
+  * If there are problems determining whether an update process is still
+    running, automatically assume it's not after some timeout.
+
+ -- Stephen Warren <swarren@wwwdotorg.org>  Sun, 21 Apr 2024 16:25:31 -0600
+
 fcch-acl-server (3) bookworm; urgency=medium
 
   * Add HTTP log view URL.
