@@ -198,10 +198,31 @@ class GUnicornApp(gunicorn.app.base.BaseApplication):
     def load(self):
         return self.application
 
+# A GUnicorn worker launches the ACL update process.
+# This signal handler is installed in each worker to reap any such process.
+# It does not get installed in the main GUnicorn master process.
+# If the worker dies before the ACL update process exits, the ACL update
+# process will be reparented to PID 1, which will also reap it.
+def on_sig_child(signum, frame):
+    while True:
+        try:
+            (pid, status) = os.waitpid(-1, os.WNOHANG)
+            if pid == 0:
+                break
+        # Docs say (0, 0) is returned with WNOHANG, but in practice we get
+        # this exception.
+        except ChildProcessError:
+            break
+
+def post_worker_init(worker):
+    import signal
+    orig = signal.signal(signal.SIGCHLD, on_sig_child)
+
 options = {
     'bind': '%s:%s' % ('', '8080'),
     'workers': 2,
     'accesslog': http_log_fn,
     'pidfile': pid_fn,
+    'post_worker_init': post_worker_init,
 }
 GUnicornApp(app, options).run()
