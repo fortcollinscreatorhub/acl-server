@@ -60,18 +60,32 @@ def show_file(fn, template, **extra):
         content='Could not read log file'
     return flask.render_template(template, content=content, **extra)
 
+class CantDetermineRunning(Exception):
+    def __init__(self, seconds_left):
+        self.seconds_left = seconds_left
+
 def update_acls_running():
     if not os.path.exists(acl_update_pid_fn):
         return False
-    with open(acl_update_pid_fn, 'rt') as pidf:
-        pid_str = pidf.read().strip()
-    if not pid_str:
-        return False
-    pid = int(pid_str)
     try:
+        with open(acl_update_pid_fn, 'rt') as pidf:
+            pid_str = pidf.read().strip()
+        if not pid_str:
+            return False
+        pid = int(pid_str)
         os.kill(pid, 0)
-    except OSError:
+    except ProcessLookupError:
         running = False
+    except:
+        log_exception()
+        pid_mtime = os.stat(acl_update_pid_fn).st_mtime
+        when_assume_now_running = pid_mtime + 120
+        now = time.time()
+        time_left_until_assume_not_running = int(when_assume_now_running - now)
+        if time_left_until_assume_not_running <= 0:
+            running = False
+        else:
+            return time_left_until_assume_not_running
     else:
         running = True
     if not running:
@@ -86,10 +100,8 @@ def update_acls_running():
 def update_acls_start():
     try:
         is_running = update_acls_running()
-    except Exception as e:
-        log_exception()
-        import traceback
-        return 'Could not determine current running status:\n' + '\n'.join(traceback.format_exception(e))
+    except CantDetermineRunning as e:
+        return f'Could not determine whether update is in progress; please wait {e.seconds_left} seconds and try again'
     if is_running:
         return 'Already running'
     try:
