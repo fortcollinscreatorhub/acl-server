@@ -1,3 +1,11 @@
+fcch-acl-server (5) bookworm; urgency=medium
+
+  * Catch attempts to access invalid ACLs via the API.
+  * Add ability to view all access logs.
+  * Sort ACL list view.
+
+ -- Stephen Warren <swarren@wwwdotorg.org>  Sat, 10 Aug 2024 21:57:35 -0600
+
 fcch-acl-server (4) bookworm; urgency=medium
 
   * Translate failures triggering an ACL update to HTTP errors, for better
