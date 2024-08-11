@@ -157,7 +157,7 @@ def ui_view_acl_update_log():
 
 @app.route('/ui/view-acls')
 def ui_view_acls():
-    fns = os.listdir(acl_dir)
+    fns = sorted(os.listdir(acl_dir))
     acls = [acl[len(acl_fn_prefix):] for acl in fns if acl.startswith(acl_fn_prefix)]
     return flask.render_template('ui-view-acls.html', acls=acls)
 
