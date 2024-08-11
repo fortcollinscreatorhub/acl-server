@@ -1,0 +1,18 @@
+<html>
+<head>
+<title>View Access Logs | FCCH Access Control</title>
+</head>
+<body>
+<h1>Access Logs</h1>
+{% if logs %}
+<ul>
+{% for log in logs %}
+  <li><a href="/ui/view-access-log/{{log}}">{{log}}</a></li>
+{% endfor %}
+</ul>
+{% else %}
+<p>No Access Logs defined!</p>
+{% endif %}
+</body>
+</html>
+

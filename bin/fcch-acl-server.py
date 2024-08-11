@@ -23,8 +23,12 @@ update_acls_bin = os.path.join(bin_dir, 'generate-acls.sh')
 var_dir = os.path.join(args.root_dir, 'var')
 acl_dir = os.path.join(var_dir, 'acls')
 acl_fn_prefix = 'acl-'
+re_acl_name = re.compile('^[a-z0-9_.-]+$')
 log_dir = os.path.join(var_dir, 'log')
-access_log_fn_template = os.path.join(log_dir, 'access-%Y-%m.log')
+access_log_fn_prefix = 'access-'
+access_log_fn_template = '%Y-%m'
+re_access_log_name = re.compile('^[0-9]+-[0-9]+$')
+access_log_fn_suffix = '.log'
 access_log_ts_template = '%Y%m%dT%H%M%S.'
 http_log_fn = os.path.join(log_dir, 'http.log')
 run_dir = os.path.join(var_dir, 'run')
@@ -39,8 +43,6 @@ app = flask.Flask(
     static_folder=web_dir + '/static',
     template_folder=web_dir + '/templates',
 )
-
-re_acl_name = re.compile('^[a-z0-9_.-]+$')
 
 def log_exception():
     import traceback
@@ -122,8 +124,13 @@ def update_acls_start():
         return 'Could not record update pid; please wait 1 minute before retrying:\n' + '\n'.join(traceback.format_exception(e))
     return None
 
-def access_log_fn():
-    return time.strftime(access_log_fn_template)
+def access_log_fn(date_time = None):
+    if date_time is None:
+        date_time = time.strftime(access_log_fn_template)
+    else:
+        if not re_access_log_name.match(date_time):
+            raise Exception('Invalid access log ID', date_time)
+    return os.path.join(log_dir, access_log_fn_prefix + date_time + access_log_fn_suffix)
 
 last_ts = None
 ts_seq_num = 0
@@ -165,9 +172,18 @@ def ui_view_acls():
 def ui_view_acl(acl):
     return show_file(acl_fn(acl), 'ui-view-acl.html', name=acl)
 
-@app.route('/ui/view-access-check-log')
-def ui_view_access_check_log():
-    return show_file(access_log_fn(), 'ui-view-access-check-log.html')
+@app.route('/ui/view-access-logs')
+def ui_view_access_logs():
+    fns = sorted(os.listdir(log_dir))
+    logs = [
+        log[len(access_log_fn_prefix):][:-len(access_log_fn_suffix)]
+        for log in fns if log.startswith(access_log_fn_prefix)
+    ]
+    return flask.render_template('ui-view-access-logs.html', logs=logs)
+
+@app.route('/ui/view-access-log/<date_time>')
+def ui_view_access_log(date_time):
+    return show_file(access_log_fn(date_time), 'ui-view-access-log.html', name=date_time)
 
 @app.route('/ui/view-http-log')
 def ui_view_http_log():
