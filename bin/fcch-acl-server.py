@@ -192,11 +192,14 @@ def ui_view_http_log():
 @app.route('/api/check-access-0/<acl>/<rfid>')
 def api_check_access_0(acl, rfid):
     result = False
-    with open(acl_fn(acl), 'rt') as f:
-        for l in f.readlines():
-            if l.strip() == rfid:
-                result = True
-                break
+    try:
+        with open(acl_fn(acl), 'rt') as f:
+            for l in f.readlines():
+                if l.strip() == rfid:
+                    result = True
+                    break
+    except:
+        log_exception()
     with open(access_log_fn(), 'at+') as f:
         print('%s,check,%s,%s,%s' % (gen_ts(), acl, rfid, repr(result)), file=f)
     return flask.Response(repr(result), mimetype='text/plain')
@@ -208,8 +211,12 @@ def api_log_remote_access_check_0(acl, rfid, result):
 
 @app.route('/api/get-acl-0/<acl>')
 def api_get_acl_0(acl):
-    with open(acl_fn(acl), 'rt') as f:
-        return flask.Response(f.read(), mimetype='text/plain')
+    try:
+        with open(acl_fn(acl), 'rt') as f:
+            return flask.Response(f.read(), mimetype='text/plain')
+    except:
+        log_exception()
+        return flask.Response('', mimetype='text/plain')
 
 class GUnicornApp(gunicorn.app.base.BaseApplication):
     def __init__(self, app, options=None):
