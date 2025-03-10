@@ -1,3 +1,9 @@
+fcch-acl-server (6) bookworm; urgency=medium
+
+  * Allow RFID clients to specify ACL name in any case.
+
+ -- Stephen Warren <swarren@wwwdotorg.org>  Sun, 09 Mar 2025 18:50:25 -0600
+
 fcch-acl-server (5) bookworm; urgency=medium
 
   * Catch attempts to access invalid ACLs via the API.
