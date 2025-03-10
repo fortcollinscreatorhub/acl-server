@@ -191,6 +191,7 @@ def ui_view_http_log():
 
 @app.route('/api/check-access-0/<acl>/<rfid>')
 def api_check_access_0(acl, rfid):
+    acl = acl.lower()
     result = False
     try:
         with open(acl_fn(acl), 'rt') as f:
@@ -206,11 +207,13 @@ def api_check_access_0(acl, rfid):
 
 @app.route('/api/log-remote-access-check-0/<acl>/<rfid>/<result>')
 def api_log_remote_access_check_0(acl, rfid, result):
+    acl = acl.lower()
     with open(access_log_fn(), 'at+') as f:
         print('%s,check,%s,%s,%s' % (gen_ts(), acl, rfid, result), file=f)
 
 @app.route('/api/get-acl-0/<acl>')
 def api_get_acl_0(acl):
+    acl = acl.lower()
     try:
         with open(acl_fn(acl), 'rt') as f:
             return flask.Response(f.read(), mimetype='text/plain')
