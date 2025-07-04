@@ -42,13 +42,29 @@ def get_all_active_members(debug, contactsUrl):
 
     valid_date = str(datetime.date.today() - datetime.timedelta(days=7)) # 7 days ago in yyyy-mm-dd format
 
-    #params = {'$filter': 'member eq true AND Status eq Active',
-    #          '$async': 'false'}
-    params = {'$filter': "member eq true AND ( Status eq Active OR ( Status eq PendingRenewal AND 'Renewal due' ge " + valid_date + "))",
-              '$async': 'false'}
-    request_url = contactsUrl + '?' + urllib.parse.urlencode(params)
-    if debug: print('Making api call to get contacts')
-    return api.execute_request(request_url).Contacts
+    pageSize = 100
+    pageStart = 0
+    contacts = []
+    while True:
+        params = {
+            '$filter': "member eq true AND ( Status eq Active OR ( Status eq PendingRenewal AND 'Renewal due' ge " + valid_date + "))",
+            '$async': 'false',
+            '$top': pageSize,
+            '$skip': pageStart,
+        }
+        request_url = contactsUrl + '?' + urllib.parse.urlencode(params)
+        if debug: print('Making api call to get contacts')
+
+        response = api.execute_request(request_url)
+        thisPageContacts = response.Contacts
+        contacts.extend(thisPageContacts)
+
+        thisPageSize = len(thisPageContacts)
+        if debug: print(f"pageStart {pageStart} thisPageSize {thisPageSize}")
+        pageStart += thisPageSize
+        if thisPageSize != pageSize:
+            break
+    return contacts
 
 RFID_list = []
 NAME_list = []
