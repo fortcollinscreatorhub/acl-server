@@ -1,3 +1,10 @@
+fcch-acl-server (7) bookworm; urgency=medium
+
+  * Use WA API paging feature.
+  * Reverse-sort list of logs in web UI.
+
+ -- Stephen Warren <swarren@wwwdotorg.org>  Fri, 04 Jul 2025 11:38:14 -0600
+
 fcch-acl-server (6) bookworm; urgency=medium
 
   * Allow RFID clients to specify ACL name in any case.
