@@ -174,7 +174,7 @@ def ui_view_acl(acl):
 
 @app.route('/ui/view-access-logs')
 def ui_view_access_logs():
-    fns = sorted(os.listdir(log_dir))
+    fns = sorted(os.listdir(log_dir), reverse=True)
     logs = [
         log[len(access_log_fn_prefix):][:-len(access_log_fn_suffix)]
         for log in fns if log.startswith(access_log_fn_prefix)
