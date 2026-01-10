@@ -1,3 +1,10 @@
+fcch-acl-server (8) bookworm; urgency=medium
+
+  * Give all members access to new electronics-locker ACL.
+  * Cleanups.
+
+ -- Stephen Warren <swarren@wwwdotorg.org>  Fri, 09 Jan 2026 18:13:49 -0700
+
 fcch-acl-server (7) bookworm; urgency=medium
 
   * Use WA API paging feature.

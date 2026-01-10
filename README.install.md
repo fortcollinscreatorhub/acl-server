@@ -14,8 +14,8 @@ Install the fcch-acl-server package:
 
 ```shell
 cd /tmp
-wget https://www.fortcollinscreatorhub.org/rpi-packages/fcch-acl-server_7_all.deb
-sudo apt install ./fcch-acl-server_7_all.deb
+wget https://www.fortcollinscreatorhub.org/rpi-packages/fcch-acl-server_8_all.deb
+sudo apt install ./fcch-acl-server_8_all.deb
 ```
 
 Create file `/opt/fcch/acl-server/etc/wa-credentials`:
