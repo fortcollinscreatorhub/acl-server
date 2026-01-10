@@ -91,9 +91,6 @@ def fix_RFID(r):
 
     Returns: integer RFID
     """
-    #f = str(r).strip()
-    #while f[0] == '0':
-    #    f = f[1:]
     return int(r)
 
 def grab_RFID(debug, contact):
@@ -107,14 +104,6 @@ def grab_RFID(debug, contact):
     global NAME_list
 
     priv = ['door', 'beltsander', 'spindlesander'] # everyone gets in the door and access to some basic tools
-    # change: only folks that have taken the orientation get in the door!
-    #
-    #priv = []
-    #for field in contact.FieldValues:
-    #    if (field.FieldName == 'Training'):
-    #        for training in field.Value:
-    #            if (training.Label == 'Orientation'):
-    #                priv.append('door')
 
     rfid = ''
     for field in contact.FieldValues:
