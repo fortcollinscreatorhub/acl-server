@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 # Copyright 2018-2022 Steve Undy <steve@roseundy.net>
+# Copyright 2026 Stephen Warren <swarren@wwwdotorg.org>
 
 __author__ = 'steve@roseundy.net'
 
@@ -13,7 +14,25 @@ import time
 import sys
 import datetime
 
+# Configuration/policy
+
+# Some ACLs get renamed
+acl_mapping = {
+    'blaser': 'big-laser-cutter',
+    'mlaser': 'medium-laser-cutter',
+    'slaser': 'small-laser-cutter',
+}
+
+# Everyone gets in the door and access to some basic tools
+all_member_privs = [
+    'door',
+    'beltsander',
+    'spindlesander'
+]
+
 apiKey_fname = 'wa-credentials'
+
+# Implementation
 
 bin_dir = os.path.dirname(__file__)
 app_dir = os.path.dirname(bin_dir)
@@ -69,10 +88,6 @@ def get_all_active_members(debug, contactsUrl):
 RFID_list = []
 NAME_list = []
 
-acl_mapping = {'blaser': 'big-laser-cutter',
-               'mlaser': 'medium-laser-cutter',
-               'slaser': 'small-laser-cutter'}
-
 def map_acl(x):
     """Maps privileges from Wild Apricot member database
     to ACL names used by ACL server
@@ -102,7 +117,8 @@ def grab_RFID(debug, contact):
     global RFID_list
     global NAME_list
 
-    priv = ['door', 'beltsander', 'spindlesander'] # everyone gets in the door and access to some basic tools
+    privs = []
+    privs.extend(all_member_privs)
 
     rfid = ''
     for field in contact.FieldValues:
@@ -110,19 +126,19 @@ def grab_RFID(debug, contact):
             rfid = field.Value
         if (field.FieldName == 'Privileges'):
             for privilege in field.Value:
-                priv.append(map_acl(privilege.Label))
+                privs.append(map_acl(privilege.Label))
     rfids = []
     if rfid == '':
         return
     if ',' in rfid:
         for r in rfid.split(','):
-            RFID_list.append({'rfid':fix_RFID(r), 'priv':priv})
+            RFID_list.append({'rfid':fix_RFID(r), 'privs':privs})
             rfids.append(str(fix_RFID(r)))
-            if debug: print ('Appending ACL - rfid:', r, 'priv:', priv)
+            if debug: print ('Appending ACL - rfid:', r, 'privs:', privs)
     else:
-        RFID_list.append({'rfid':fix_RFID(rfid), 'priv':priv})
+        RFID_list.append({'rfid':fix_RFID(rfid), 'privs':privs})
         rfids.append(str(fix_RFID(rfid)))
-        if debug: print ('Appending ACL - rfid:', rfid, 'priv:', priv)
+        if debug: print ('Appending ACL - rfid:', rfid, 'privs:', privs)
 
     rfid_str = ','.join(rfids)
     NAME_list.append({'name':(contact.LastName + ',' + contact.FirstName), 'rfids':rfid_str})
@@ -140,7 +156,7 @@ def dump_RFIDs(debug, acl_dir, ts):
     privileges = set()
     RFID_list.sort(key=lambda x:x['rfid'])
     for e in RFID_list:
-        for p in e['priv']:
+        for p in e['privs']:
             privileges.add(p)
 
     # open one file per privilege
@@ -158,7 +174,7 @@ def dump_RFIDs(debug, acl_dir, ts):
 
     # go back through list of RFIDs and write them to the appropriate file(s)
     for e in RFID_list:
-        for p in e['priv']:
+        for p in e['privs']:
             File[p].write(str(e['rfid'])+'\n')
 
     # all done writing
