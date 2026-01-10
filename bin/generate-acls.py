@@ -100,13 +100,6 @@ def map_acl(x):
     else:
         return (x)
 
-def fix_RFID(r):
-    """Maps RFID strings to integers
-
-    Returns: integer RFID
-    """
-    return int(r)
-
 def grab_RFID(debug, contact):
     """Given a contact from Wild Apricot member database,
     pulls out list of RFIDs and privileges (ACLs)
@@ -120,29 +113,25 @@ def grab_RFID(debug, contact):
     privs = []
     privs.extend(all_member_privs)
 
-    rfid = ''
+    rfid_field = ''
     for field in contact.FieldValues:
         if (field.FieldName == 'RFID ID') and (field.Value is not None):
-            rfid = field.Value
+            rfid_field = field.Value
         if (field.FieldName == 'Privileges'):
             for privilege in field.Value:
                 privs.append(map_acl(privilege.Label))
     rfids = []
-    if rfid == '':
+    if rfid_field == '':
         return
-    if ',' in rfid:
-        for r in rfid.split(','):
-            RFID_list.append({'rfid':fix_RFID(r), 'privs':privs})
-            rfids.append(str(fix_RFID(r)))
-            if debug: print ('Appending ACL - rfid:', r, 'privs:', privs)
-    else:
-        RFID_list.append({'rfid':fix_RFID(rfid), 'privs':privs})
-        rfids.append(str(fix_RFID(rfid)))
+    for rfid in rfid_field.split(','):
+        rfid = int(rfid)
+        RFID_list.append({'rfid':rfid, 'privs':privs})
+        rfids.append(str(rfid))
         if debug: print ('Appending ACL - rfid:', rfid, 'privs:', privs)
 
-    rfid_str = ','.join(rfids)
-    NAME_list.append({'name':(contact.LastName + ',' + contact.FirstName), 'rfids':rfid_str})
-    if debug: print ('Appending Name: ' + contact.LastName + ',' + contact.FirstName + ' rfids: ' + rfid_str)
+    rfids_str = ','.join(rfids)
+    NAME_list.append({'name':(contact.LastName + ',' + contact.FirstName), 'rfids':rfids_str})
+    if debug: print ('Appending Name: ' + contact.LastName + ',' + contact.FirstName + ' rfids: ' + rfids_str)
 
 def dump_RFIDs(debug, acl_dir, ts):
     """Reads stored list of RFID and writes
