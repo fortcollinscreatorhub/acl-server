@@ -88,18 +88,6 @@ def get_all_active_members(debug, contactsUrl):
 RFID_list = []
 NAME_list = []
 
-def map_acl(x):
-    """Maps privileges from Wild Apricot member database
-    to ACL names used by ACL server
-
-    Returns: mapped ACL name
-    """
-    x = x.lower()
-    if x in acl_mapping:
-        return (acl_mapping[x])
-    else:
-        return (x)
-
 def grab_RFID(debug, contact):
     """Given a contact from Wild Apricot member database,
     pulls out list of RFIDs and privileges (ACLs)
@@ -119,7 +107,8 @@ def grab_RFID(debug, contact):
             rfid_field = field.Value
         if (field.FieldName == 'Privileges'):
             for privilege in field.Value:
-                privs.append(map_acl(privilege.Label))
+                priv = privilege.Label.lower()
+                privs.append(acl_mapping.get(priv, priv))
     rfids = []
     if rfid_field == '':
         return
