@@ -32,7 +32,6 @@ def get_apiKey(kpath):
         apiKey = f.readline().strip()
     return (apiKey)
 
-
 def get_all_active_members(debug, contactsUrl):
     """Make an API call to Wild Apricot to retrieve
     contact info for all active members.
@@ -40,7 +39,8 @@ def get_all_active_members(debug, contactsUrl):
     Returns: list of contacts
     """
 
-    valid_date = str(datetime.date.today() - datetime.timedelta(days=7)) # 7 days ago in yyyy-mm-dd format
+    # 7 days ago in yyyy-mm-dd format
+    valid_date = str(datetime.date.today() - datetime.timedelta(days=7))
 
     pageSize = 100
     pageStart = 0
@@ -84,7 +84,6 @@ def map_acl(x):
         return (acl_mapping[x])
     else:
         return (x)
-    
 
 def fix_RFID(r):
     """Maps RFID strings to integers
@@ -133,9 +132,10 @@ def dump_RFIDs(debug, acl_dir, ts):
     """Reads stored list of RFID and writes
     ACL files with that data
     """
+
     # get existing list of acl files
     old_files = os.listdir(acl_dir)
-    
+
     # sort RFIDs and generate list of privileges - we need the list to know what files to write
     privileges = set()
     RFID_list.sort(key=lambda x:x['rfid'])
@@ -157,7 +157,6 @@ def dump_RFIDs(debug, acl_dir, ts):
             pass
 
     # go back through list of RFIDs and write them to the appropriate file(s)
-    #
     for e in RFID_list:
         for p in e['priv']:
             File[p].write(str(e['rfid'])+'\n')
@@ -169,9 +168,9 @@ def dump_RFIDs(debug, acl_dir, ts):
     # rename files just written
     for f in privileges:
         fname = os.path.join(acl_dir, acl_fname_prefix + f)
-        fname_tmp = os.path.join(acl_dir, '.' + acl_fname_prefix + f + '.tmp')                                 
+        fname_tmp = os.path.join(acl_dir, '.' + acl_fname_prefix + f + '.tmp')
         os.rename(fname_tmp, fname)
-        
+
     # remove obsolete files
     for fname in old_files:
         if not fname.startswith(acl_fname_prefix):
@@ -192,17 +191,11 @@ def dump_NAMEs(debug, acl_dir, ts):
     for e in NAME_list:
         f.write(e['name']+':'+str(e['rfids'])+'\n')
 
-    # all done writing
     f.close()
 
-
-####
-################ Main ##################
-####
 if __name__ == '__main__':
     ts = time.strftime('%Y%m%dT%H%M%S')
     parser = argparse.ArgumentParser(
-        #parents=[tools.argparser],
         description='Download Access Control info (RFIDs) from Wild Apricot')
     parser.add_argument(
         '--debug', action='store_true', help='Turn on debugging prints')
@@ -219,11 +212,10 @@ if __name__ == '__main__':
             parser.error('output_dir required if --auth-only not specified')
 
     # Start API and authenticate
-    #
     apiKey = get_apiKey(apiKey_fpath)
-    
+
     api = WaApi.WaApiClient("CLIENT_ID", "CLIENT_SECRET")
-    
+
     api.authenticate_with_apikey (apiKey, scope='account_view contacts_view')
     if args.debug: print('Authenticated')
 
@@ -232,26 +224,21 @@ if __name__ == '__main__':
 
     lock_fn = os.path.join(args.output_dir, ".lock")
     with FileLock(lock_fn):
-        
         # Grab account details
-        #
         accounts = api.execute_request("/v2/accounts")
         account = accounts[0]
         contactsUrl = next(res for res in account.Resources if res.Name == 'Contacts').Url
         if args.debug: print('contactsUrl:', contactsUrl)
 
         # request contact details on all active members
-        #
         contacts = get_all_active_members(args.debug, contactsUrl)
         if args.debug: print ('Retrieved', len(contacts), 'contacts')
 
         # find the RFIDs and privileges and store them
-        #
         for contact in contacts:
             grab_RFID(args.debug, contact)
 
         # write the RFIDs to one or more files
-        #
         dump_RFIDs(args.debug, args.output_dir, ts)
         dump_NAMEs(args.debug, args.output_dir, ts)
         print('RFID lists generated OK at', ts)
