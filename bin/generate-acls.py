@@ -27,6 +27,7 @@ acl_mapping = {
 all_member_privs = [
     'door',
     'beltsander',
+    'electronics-locker',
     'spindlesander'
 ]
 
